@@ -1,4 +1,4 @@
-const socket = io('http://localhost:5100');
+const socket = io('http://localhost:5000');
 const loginScreen = document.getElementById('login-screen');
 const loginInput = document.getElementById('login-input');
 const loginButton = document.getElementById('login-button');
@@ -6,7 +6,9 @@ const chatScreen = document.getElementById('chat-screen');
 const chatPanel = document.getElementById('chat-panel-top');
 const chatTextInput = document.getElementById('chat-text-input');
 const activeUsers = document.getElementById('active-users');
+const activeChatrooms = document.getElementById('active-chatrooms');
 const sendMessageButton = document.getElementById('send-button');
+const createChatroomButton = document.getElementById('create-chatroom-button');
 const emotes = [...document.getElementsByTagName('td')];
 
 const MESSAGETYPE = {
@@ -46,7 +48,9 @@ var activeChats = {
 }
 var selectedChat = null;
 var onlineUsers = [];
+var onlineChatrooms = [];
 
+//username input
 loginButton.addEventListener("click", () => {
     if(loginInput.value.length > 6) {
         clientUsername = loginInput.value;
@@ -59,14 +63,29 @@ loginButton.addEventListener("click", () => {
     }
 });
 
+//send message
 sendMessageButton.addEventListener('click',() => {
     if(chatTextInput.value.length > 0 && selectedChat !== null) {
         let msg = new Message(MESSAGETYPE.TEXT,socket.id,clientUsername,selectedChat,chatTextInput.value);
         chatTextInput.value = '';
         socket.emit('message-receiver',JSON.stringify(msg));
+        if(activeChats[selectedChat] === undefined) activeChats[selectedChat] = [];
+        activeChats[selectedChat].push(msg);
+        updateChat();
     }
 })
 
+//create chatroom
+createChatroomButton.addEventListener('click',() => {
+    let chatroomName = prompt("Enter a name for the chatroom")
+    if(chatroomName !== null) {
+        socket.emit("create-chatroom",chatroomName,(response) => {
+            alert(response);
+        });
+    }
+})
+
+//get message from other users
 socket.on("message-receiver",(data) => {
     let msg = JSON.parse(data);
     if(activeChats[msg.senderId] === undefined) {
@@ -76,6 +95,42 @@ socket.on("message-receiver",(data) => {
     if(msg.senderId === selectedChat) {
         updateChat()
     }
+})
+
+//get opened chatrooms
+socket.on("get-chatrooms",(data) => {
+    onlineChatrooms = JSON.parse(data);
+    let customButton;
+    for(let i = 0 ; i < activeChatrooms.children.length ; i++) {
+        if(activeChatrooms.children[i].id === "create-chatroom-button") {
+            customButton = activeChatrooms.children[i];
+        }
+    }
+    activeChatrooms.innerHTML = '';
+    activeChatrooms.appendChild(customButton)
+    onlineChatrooms.forEach((item) => {
+        let div = document.createElement("div");
+        div.addEventListener("click", () => {
+            activeChatrooms.childNodes.forEach((item) => {
+                item.classList.remove("selected-chat")
+            })
+            activeUsers.childNodes.forEach((item) => {
+                item.classList.remove("selected-chat")
+            })
+            selectedChat = item;
+            div.classList.add("selected-chat")
+            if(activeChats[selectedChat] === undefined) {
+                activeChats[selectedChat] = [];
+            }
+            updateChat();
+        })
+        let span = document.createElement("span");
+        span.textContent = item;
+        span.className = "active-users-item-span"
+        div.className = "active-users-item";
+        div.appendChild(span)
+        activeChatrooms.appendChild(div);
+    })
 })
 
 socket.on("get-users", (data) => {
@@ -89,7 +144,11 @@ socket.on("get-users", (data) => {
     onlineUsers.forEach((item) => {
         let div = document.createElement("div");
         div.addEventListener("click", () => {
+            activeUsers.childNodes.forEach((item) => {
+                item.classList.remove("selected-chat")
+            })
             selectedChat = item.id;
+            div.classList.add("selected-chat")
             if(activeChats[selectedChat] === undefined) {
                 activeChats[selectedChat] = [];
             }
@@ -108,15 +167,17 @@ const updateChat = () => {
     const messages = activeChats[selectedChat];
     chatPanel.innerHTML = '';
     messages.forEach((msg) => {
-        console.log(msg);
-        if(msg.type = MESSAGETYPE.FILE && msg.senderId !== socket.id) {
-            const messageDiv = document.createElement('div');  messageDiv.className = "message-another-user";
+        if(msg.type === MESSAGETYPE.TEXT) {
+            const messageDiv = document.createElement('div');  messageDiv.className = (msg.senderId === socket.id ? "message-current-user" : "message-another-user") ;
             const senderNameHeader = document.createElement('h3'); senderNameHeader.innerText = msg.senderName;
             const senderMessageP = document.createElement('p'); senderMessageP.innerText = msg.content;
             const contentDiv = document.createElement('div'); contentDiv.classList = "content-div"
             contentDiv.appendChild(senderMessageP);
             messageDiv.appendChild(senderNameHeader); messageDiv.appendChild(contentDiv);
             chatPanel.appendChild(messageDiv);
+        }
+        else if(msg.type = MESSAGETYPE.FILE) {
+
         }
     })
     chatPanel.scrollTop = chatPanel.scrollHeight;
