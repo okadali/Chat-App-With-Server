@@ -1,4 +1,9 @@
-const io = require("socket.io")(5000,{cors:{origin: "*"}})
+const io = require("socket.io")(5100,{cors:{origin: "*"}})
+
+const MESSAGETYPE = {
+    TEXT : 0,
+    FILE : 1 
+}
 
 var allClients = {};
 
@@ -20,8 +25,11 @@ io.on("connection", socket => {
         updateOnlineUsers();
     })
 
-    socket.on('send-chat-message', message => {
-        socket.broadcast.emit("listen-broadcast",message.id);
+    socket.on('message-receiver', message => {
+        let msg = JSON.parse(message);
+        if(msg.type === MESSAGETYPE.TEXT) {
+            io.to(msg.receiverId).emit("message-receiver",message);
+        }
     })
 })
 

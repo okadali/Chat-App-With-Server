@@ -75,6 +75,9 @@ body {
 }
 #chat-panel-top {
     height: 535px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
 }
 #chat-panel-bottom {
     height: 80px;
@@ -90,6 +93,7 @@ body {
     border-radius: 20px;
     border: 1px solid var(--secondary-color);
     margin-top: 13px;
+    padding-left: 10px;
 }
 #emote-table {
     position: absolute;
@@ -127,4 +131,24 @@ td {
 }
 .active-users-item:hover {
     filter: brightness(50%);
+}
+
+
+#chat-panel-top h3 {
+    margin-left: 10px;
+    margin-top: 5px;
+    color: white;
+}
+
+.message-another-user {
+    background-color: var(--colorOne);
+    width: 235px;
+    border-radius: 10px;
+    align-self:flex-start;
+    margin: 10px;
+}
+.content-div {
+    margin: 10px;
+    word-wrap: break-word;
+    color: white;
 }
