@@ -43,8 +43,13 @@ io.on("connection", socket => {
         updateOnlineUsers();
     })
 
+    socket.on("join-chatroom",(wantedChatroomID) => {
+        socket.join(wantedChatroomID);
+    })
+
     socket.on('message-receiver', message => {
         let msg = JSON.parse(message);
+        console.log(msg);
         if(msg.type === MESSAGETYPE.TEXT) {
             io.to(msg.receiverId).emit("message-receiver",message);
         }

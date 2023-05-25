@@ -88,13 +88,26 @@ createChatroomButton.addEventListener('click',() => {
 //get message from other users
 socket.on("message-receiver",(data) => {
     let msg = JSON.parse(data);
-    if(activeChats[msg.senderId] === undefined) {
-        activeChats[msg.senderId] = [];
+    if(msg.senderId === socket.id) return;
+    if(msg.receiverId === socket.id) {
+        if(activeChats[msg.senderId] === undefined) {
+            activeChats[msg.senderId] = [];
+        }
+        activeChats[msg.senderId].push(msg)
+        if(msg.senderId === selectedChat) {
+            updateChat();
+        }
     }
-    activeChats[msg.senderId].push(JSON.parse(data))
-    if(msg.senderId === selectedChat) {
-        updateChat()
+    else {
+        if(activeChats[msg.receiverId] === undefined) {
+            activeChats[msg.receiverId] = [];
+        }
+        activeChats[msg.receiverId].push(msg);
+        if(msg.receiverId === selectedChat) {
+            updateChat();
+        }
     }
+    
 })
 
 //get opened chatrooms
@@ -118,6 +131,7 @@ socket.on("get-chatrooms",(data) => {
                 item.classList.remove("selected-chat")
             })
             selectedChat = item;
+            socket.emit("join-chatroom",item);
             div.classList.add("selected-chat")
             if(activeChats[selectedChat] === undefined) {
                 activeChats[selectedChat] = [];
@@ -145,6 +159,9 @@ socket.on("get-users", (data) => {
         let div = document.createElement("div");
         div.addEventListener("click", () => {
             activeUsers.childNodes.forEach((item) => {
+                item.classList.remove("selected-chat")
+            })
+            activeChatrooms.childNodes.forEach((item) => {
                 item.classList.remove("selected-chat")
             })
             selectedChat = item.id;
