@@ -4,6 +4,7 @@ const loginInput = document.getElementById('login-input');
 const loginButton = document.getElementById('login-button');
 const chatScreen = document.getElementById('chat-screen');
 const chatPanel = document.getElementById('chat-panel-top');
+const fileSender = document.getElementById('send-file');
 const chatTextInput = document.getElementById('chat-text-input');
 const activeUsers = document.getElementById('active-users');
 const activeChatrooms = document.getElementById('active-chatrooms');
@@ -23,12 +24,13 @@ class User {
     }
 }
 class Message {
-    constructor(type,senderId,senderName,receiverId,content) {
+    constructor(type,senderId,senderName,receiverId,content,contentDetails = {}) {
         this.type = type;
         this.senderId = senderId;
         this.senderName = senderName;
         this.receiverId = receiverId;
         this.content = content;
+        this.contentDetails = contentDetails;
     }
 
     logMessage() {
@@ -49,6 +51,17 @@ var activeChats = {
 var selectedChat = null;
 var onlineUsers = [];
 var onlineChatrooms = [];
+
+//file input
+function upload(files) {
+    if(selectedChat !== null) {
+        let msg = new Message(MESSAGETYPE.FILE,socket.id,clientUsername,selectedChat,files[0],{name:files[0].name,type:files[0].type});
+        socket.emit("upload",msg);
+        if(activeChats[selectedChat] === undefined) activeChats[selectedChat] = [];
+        activeChats[selectedChat].push(msg);
+        updateChat();
+    }
+}
 
 //username input
 loginButton.addEventListener("click", () => {
@@ -86,8 +99,7 @@ createChatroomButton.addEventListener('click',() => {
 })
 
 //get message from other users
-socket.on("message-receiver",(data) => {
-    let msg = JSON.parse(data);
+socket.on("message-receiver",(msg) => {
     if(msg.senderId === socket.id) return;
     if(msg.receiverId === socket.id) {
         if(activeChats[msg.senderId] === undefined) {
@@ -109,6 +121,7 @@ socket.on("message-receiver",(data) => {
     }
     
 })
+
 
 //get opened chatrooms
 socket.on("get-chatrooms",(data) => {
@@ -194,7 +207,18 @@ const updateChat = () => {
             chatPanel.appendChild(messageDiv);
         }
         else if(msg.type = MESSAGETYPE.FILE) {
-
+            const messageDiv = document.createElement('div');  messageDiv.className = (msg.senderId === socket.id ? "message-current-user" : "message-another-user") ;
+            const senderNameHeader = document.createElement('h3'); senderNameHeader.innerText = msg.senderName;
+            const downloadDiv = document.createElement('div'); downloadDiv.className = "download-div"
+            const downloadLink = document.createElement('a'); downloadLink.className = "download-class"
+            var binaryData = [msg.content];
+            downloadLink.href = URL.createObjectURL(new Blob(binaryData, {type: msg.contentDetails.type}));
+            downloadLink.download = msg.contentDetails.name
+            downloadLink.innerText = msg.contentDetails.name
+            messageDiv.appendChild(senderNameHeader); 
+            downloadDiv.appendChild(downloadLink)
+            messageDiv.appendChild(downloadDiv);
+            chatPanel.appendChild(messageDiv);
         }
     })
     chatPanel.scrollTop = chatPanel.scrollHeight;

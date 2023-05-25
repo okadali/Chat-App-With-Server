@@ -1,10 +1,5 @@
 const io = require("socket.io")(5000,{cors:{origin: "*"}})
 
-const MESSAGETYPE = {
-    TEXT : 0,
-    FILE : 1 
-}
-
 var allClients = {};
 var chatrooms = [];
 
@@ -14,7 +9,6 @@ const updateOnlineUsers = () => {
 const updateChatrooms = () => {
     io.emit("get-chatrooms",JSON.stringify(chatrooms));
 }
-
 
 
 io.on("connection", socket => {
@@ -46,13 +40,13 @@ io.on("connection", socket => {
     socket.on("join-chatroom",(wantedChatroomID) => {
         socket.join(wantedChatroomID);
     })
+    socket.on("upload",(msg) => {
+        io.to(msg.receiverId).emit("message-receiver",msg);
+    })
 
     socket.on('message-receiver', message => {
         let msg = JSON.parse(message);
-        console.log(msg);
-        if(msg.type === MESSAGETYPE.TEXT) {
-            io.to(msg.receiverId).emit("message-receiver",message);
-        }
+        io.to(msg.receiverId).emit("message-receiver",msg);
     })
 })
 
