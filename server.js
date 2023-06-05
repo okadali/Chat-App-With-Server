@@ -1,7 +1,7 @@
 const io = require("socket.io")(5000,{cors:{origin: "*"}})
 
-var allClients = {};
-var chatrooms = [];
+let allClients = {};
+let chatrooms = [];
 
 const updateOnlineUsers = () => {
     io.emit("get-users",JSON.stringify(allClients));

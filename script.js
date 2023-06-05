@@ -44,13 +44,13 @@ emotes.forEach((item) => {
     })
 })
 
-var clientUsername = "anonymous";
-var activeChats = {
+let clientUsername = "anonymous";
+let activeChats = {
 
 }
-var selectedChat = null;
-var onlineUsers = [];
-var onlineChatrooms = [];
+let selectedChat = null;
+let onlineUsers = [];
+let onlineChatrooms = [];
 
 //file input
 function upload(files) {
@@ -211,7 +211,7 @@ const updateChat = () => {
             const senderNameHeader = document.createElement('h3'); senderNameHeader.innerText = msg.senderName;
             const downloadDiv = document.createElement('div'); downloadDiv.className = "download-div"
             const downloadLink = document.createElement('a'); downloadLink.className = "download-class"
-            var binaryData = [msg.content];
+            let binaryData = [msg.content];
             downloadLink.href = URL.createObjectURL(new Blob(binaryData, {type: msg.contentDetails.type}));
             downloadLink.download = msg.contentDetails.name
             downloadLink.innerText = msg.contentDetails.name
